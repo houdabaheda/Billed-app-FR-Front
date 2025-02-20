@@ -17,13 +17,21 @@ export default class NewBill {
   }
   handleChangeFile = e => {
     e.preventDefault()
-    const file = this.document.querySelector(`input[data-testid="file"]`).files[0]
-    const filePath = e.target.value.split(/\\/g)
-    const fileName = filePath[filePath.length-1]
-    const formData = new FormData()
-    const email = JSON.parse(localStorage.getItem("user")).email
-    formData.append('file', file)
-    formData.append('email', email)
+    const file = this.document.querySelector(`input[data-testid="file"]`).files[0];
+
+    const fileName = file.name;
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    const validExtensions = ["jpg", "jpeg", "png"];
+    if (!validExtensions.includes(fileExtension)) {
+      alert("Veuillez télécharger un fichier au format jpg, jpeg ou png.");
+      e.target.value = "";
+      return;
+    }
+
+    const formData = new FormData();
+    const email = JSON.parse(localStorage.getItem("user")).email;
+    formData.append('file', file);
+    formData.append('email', email);
 
     this.store
       .bills()

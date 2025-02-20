@@ -62,9 +62,119 @@ describe("Given I am connected as an employee", () => {
 
     });
 
+
+    test("Then bills should be fetched from mock API GET", async () => {
+      window.onNavigate(ROUTES_PATH.Bills);
+      const eyeIcon = await waitFor(() => screen.getAllByTestId("icon-eye"));
+      expect(eyeIcon).toBeTruthy();
+    });
     
+  });
 
+  describe("When an error occurs on API", () => {
+    beforeEach(() => {
+      jest.spyOn(mockStore, "bills");
+      Object.defineProperty(window, "localStorage", {
+        value: localStorageMock,
+      });
+      window.localStorage.setItem(
+        "user",
+        JSON.stringify({
+          type: "Employee",
+          email: "e@e",
+        })
+      );
+      const root = document.createElement("div");
+      root.setAttribute("id", "root");
+      document.body.appendChild(root);
+      router();
+    });
 
+    test("Then bills fetch from API should fail with 404 message error", async () => {
+      mockStore.bills.mockImplementationOnce(() => {
+        return {
+          list: () => {
+            return Promise.reject(new Error("Erreur 404"));
+          },
+        };
+      });
+      window.onNavigate(ROUTES_PATH.Bills);
+      await new Promise(process.nextTick);
+      const message = await waitFor(() => screen.getByText(/Erreur 404/));
+      expect(message).toBeTruthy();
+    });
+
+    test("Then bills fetch from API should fail with 500 message error", async () => {
+      mockStore.bills.mockImplementationOnce(() => {
+        return {
+          list: () => {
+            return Promise.reject(new Error("Erreur 500"));
+          },
+        };
+      });
+
+      window.onNavigate(ROUTES_PATH.Bills);
+      await new Promise(process.nextTick);
+      const message = await waitFor(() => screen.getByText(/Erreur 500/));
+      expect(message).toBeTruthy();
+    });
+  });
+
+  describe("When I click the New Bill button on Bills Page", () => {
+    beforeEach(() => {
+      Object.defineProperty(window, "localStorage", {
+        value: localStorageMock,
+      });
+      window.localStorage.setItem(
+        "user",
+        JSON.stringify({
+          type: "Employee",
+        })
+      );
+      const root = document.createElement("div");
+      root.setAttribute("id", "root");
+      document.body.append(root);
+      router();
+    });
+
+    test("Then it should redirect to New Bill Page", async () => {
+      window.onNavigate(ROUTES_PATH.Bills);
+      const newBillBtn = await waitFor(() =>
+        screen.getByTestId("btn-new-bill")
+      );
+      userEvent.click(newBillBtn);
+      const submitBtn = await waitFor(() =>
+        document.getElementById("btn-send-bill")
+      );
+      expect(submitBtn).toBeTruthy();
+    });
+  });
+  describe("When I click the eye icon of a bill", () => {
+    beforeEach(() => {
+      Object.defineProperty(window, "localStorage", {
+        value: localStorageMock,
+      });
+      window.localStorage.setItem(
+        "user",
+        JSON.stringify({
+          type: "Employee",
+        })
+      );
+      const root = document.createElement("div");
+      root.setAttribute("id", "root");
+      document.body.append(root);
+      router();
+    });
+
+    test("Then a modal with a header text should be displayed", async () => {
+      window.onNavigate(ROUTES_PATH.Bills);
+      $.fn.modal = jest.fn();
+      const eyeIcons = await waitFor(() => screen.getAllByTestId("icon-eye"));
+      const lastEyeIcon = eyeIcons.reverse()[0];
+      userEvent.click(lastEyeIcon);
+      const headerText = await waitFor(() => screen.getByText("Justificatif"));
+      expect(headerText).toBeTruthy();
+    });
   });
   
 
